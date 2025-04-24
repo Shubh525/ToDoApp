@@ -25,7 +25,7 @@ class ToDoApp(ctk.CTk):
         self.geometry("500x450")
         self.resizable(False, False)
 
-        self.username = self.authenticate_user()
+        self.username = self.user_check()
         tasks_dir = os.path.join("User_data", "tasks")
         if not os.path.exists(tasks_dir):
             os.makedirs(tasks_dir)
@@ -33,10 +33,10 @@ class ToDoApp(ctk.CTk):
         self.save_file = os.path.join(tasks_dir, f"tasks_{self.username}.csv")
         self.tasks = []
 
-        self.create_widgets()
-        self.load_tasks()
+        self.widgets_create()
+        self.tasks_loader()
 
-    def authenticate_user(self):
+    def user_check(self):
         if not os.path.exists(USER_DB):
             with open(USER_DB, "w") as f:
                 json.dump({}, f)
@@ -56,12 +56,12 @@ class ToDoApp(ctk.CTk):
             password = dialog.get_input()
 
             if users[username] != hash_password(password):
-                dialog = ctk.CTkInputDialog(text="Incorrect password. Reset password? (yes/no)", title="Reset?")
+                dialog = ctk.CTkInputDialog(text="Incorrect password. Reset password? (y/n)", title="Reset?")
                 choice = dialog.get_input()
 
                 if choice and choice.lower() == "yes":
                     verification_code = str(random.randint(100000, 999999))
-                    print(f"[VERIFICATION CODE]: {verification_code}")
+                    print(f"[Verification Code]: {verification_code}")
 
                     dialog = ctk.CTkInputDialog(text="Enter the 6-digit verification code shown in terminal:", title="Verify")
                     entered_code = dialog.get_input()
@@ -105,7 +105,7 @@ class ToDoApp(ctk.CTk):
 
         return username
 
-    def create_widgets(self):
+    def widgets_create(self):
         self.title_label = ctk.CTkLabel(self, text=f"{self.username}'s Tasks", font=("Aptos", 25, "bold"))
         self.title_label.pack(pady=10)
 
@@ -134,7 +134,7 @@ class ToDoApp(ctk.CTk):
         if task_text:
             self.create_task(task_text, done=False)
             self.task_entry.delete(0, 'end')
-            self.save_tasks()
+            self.tasks_saver()
         else:
             ctk.CTkMessageBox.show_error("Error", "Task cannot be empty.")
             return
@@ -153,7 +153,7 @@ class ToDoApp(ctk.CTk):
             if task["checkbox"].get() == 1:
                 task["checkbox"].destroy()
                 self.tasks.remove(task)
-        self.save_tasks()
+        self.tasks_saver()
 
     def toggle_completed(self):
         self.show_completed = not self.show_completed
@@ -168,15 +168,15 @@ class ToDoApp(ctk.CTk):
                 task["checkbox"].pack_forget()
             else:
                 task["checkbox"].pack(anchor="w", padx=10, pady=2)
-        self.save_tasks()
+        self.tasks_saver()
 
-    def save_tasks(self):
+    def tasks_saver(self):
         with open(self.save_file, "w", newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             for task in self.tasks:
                 writer.writerow([task["text"], task["checkbox"].get()])
 
-    def load_tasks(self):
+    def tasks_loader(self):
         if os.path.exists(self.save_file):
             with open(self.save_file, "r", newline='', encoding='utf-8') as f:
                 reader = csv.reader(f)
